@@ -58,15 +58,15 @@ def enterDigit(d):
     resetDigits()
     GPIO.output(gpioDigitMap[d], GPIO.LOW)
     time.sleep(DIGIT_DELAY)
-#    if GPIO.input(gpioSuccessInput) != True:
-#        print
-#        print
-#        print "ERROR:  The green LED did not activate from the keypress!"
-#        print "        Check the electrical connections to the safe's PCB."
-#        print
-#        resetDigits()
-#        GPIO.cleanup()
-#        sys.exit(1)
+    if GPIO.input(gpioSuccessInput) != True:
+        print
+        print
+        print "ERROR:  The green LED did not activate from the keypress!"
+        print "        Check the electrical connections to the safe's PCB."
+        print
+        resetDigits()
+        GPIO.cleanup()
+        sys.exit(1)
     resetDigits()
 
 def tryCombination(c):
@@ -94,8 +94,8 @@ def tryCombination(c):
 def saveState():
     print "Saving state to checkpoint file..."
     try:
-        f = open('pysafehack.state', 'w')
-        f.write(successCombos)
+        f = open('pisafehack.state', 'w')
+        f.write(successCombos + "\n")
         for c in triedCombos.keys():
             f.write(str(c)+"\n")
         f.close()
@@ -109,7 +109,7 @@ def loadState():
     global triedCombos
     print "Loading state from checkpoint file..."
     try:
-        f = open('pysafehack.state', 'r')
+        f = open('pisafehack.state', 'r')
         successCombos = f.readline()
         print "    Loaded successCombos = %s" % successCombos
         for x in f.readlines():
