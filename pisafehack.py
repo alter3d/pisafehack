@@ -7,12 +7,11 @@ import time
 
 DIGIT_DELAY=0.25  # Delay after each digit press
 CHECK_DELAY=0.00  # Additional delay before checking for success IN ADDITION to DIGIT_DELAY
-POWER_INTER_DELAY=1.00 # Wait time between turning power off and turning back on
-POWER_POST_DELAY=1.50  # Wait time before checking next combo after power cycle
-POWER_CYCLE_NUM=3 # Number of attempts before cycling power
+POWER_INTER_DELAY=0.05 # Wait time between turning power off and turning back on
+POWER_POST_DELAY=0.05  # Wait time before checking next combo after power cycle
 
 gpioPowerControl = 22
-gpioSuccessInput = 26
+gpioSuccessInput = 5
 
 gpioDigitMap = [ 14, # digit 0
                  15, # digit 1
@@ -27,7 +26,6 @@ gpioDigitMap = [ 14, # digit 0
                ]
 
 successCombos = ""
-numTries = 0
 triedCombos = {}
 
 def gpioInit():
@@ -62,6 +60,13 @@ def resetDigits():
 def enterDigit(d):
     resetDigits()
     GPIO.output(gpioDigitMap[d], GPIO.LOW)
+    if GPIO.input(gpioSuccessInput != 1:
+        print
+        print
+        print "ERROR:  The green LED did not activate from the keypress!"
+        print "        Check the electrical connections to the safe's PCB."
+        print
+        sys.exit(1)
     time.sleep(DIGIT_DELAY)
     resetDigits()
 
@@ -89,9 +94,8 @@ def tryCombination(c):
 
 gpioInit()
 
-#for combo in range(0,100000):
 while True:
-    c = random.randint(0,19)
+    c = random.randint(0,99999)
     numGen = 0
     while triedCombos.has_key(c):
         numGen += 1
@@ -100,13 +104,10 @@ while True:
             GPIO.cleanup()
             sys.exit(0)
         c += 1
-        c %= 20
+        c %= 100000
     tryCombination(c)
     triedCombos[c] = 1
-    numTries += 1
-    if numTries % POWER_CYCLE_NUM == 0:
-        cyclePower()
-        numTries = 0
+    cyclePower()
 
 GPIO.cleanup()
 
