@@ -5,13 +5,14 @@ import random
 import sys
 import time
 
+CHECKPOINT_NUM=10 # Write a checkpoint file after this many combination attempts
 DIGIT_DELAY=0.25  # Delay after each digit press
 CHECK_DELAY=0.00  # Additional delay before checking for success IN ADDITION to DIGIT_DELAY
 POWER_INTER_DELAY=0.05 # Wait time between turning power off and turning back on
 POWER_POST_DELAY=0.05  # Wait time before checking next combo after power cycle
 
 gpioPowerControl = 22
-gpioSuccessInput = 5
+gpioSuccessInput = 26
 
 gpioDigitMap = [ 14, # digit 0
                  15, # digit 1
@@ -43,14 +44,10 @@ def gpioInit():
     cyclePower()
 
 def cyclePower():
-    print "Cycling power... off...",
     GPIO.output(gpioPowerControl, GPIO.HIGH)
     time.sleep(POWER_INTER_DELAY)
-    print "on...",
     GPIO.output(gpioPowerControl, GPIO.LOW)
-    print "wait...",
     time.sleep(POWER_POST_DELAY)
-    print "done"
 
 def resetDigits():
     for i in range(0,10):
@@ -60,14 +57,16 @@ def resetDigits():
 def enterDigit(d):
     resetDigits()
     GPIO.output(gpioDigitMap[d], GPIO.LOW)
-    if GPIO.input(gpioSuccessInput != 1:
-        print
-        print
-        print "ERROR:  The green LED did not activate from the keypress!"
-        print "        Check the electrical connections to the safe's PCB."
-        print
-        sys.exit(1)
     time.sleep(DIGIT_DELAY)
+#    if GPIO.input(gpioSuccessInput) != True:
+#        print
+#        print
+#        print "ERROR:  The green LED did not activate from the keypress!"
+#        print "        Check the electrical connections to the safe's PCB."
+#        print
+#        resetDigits()
+#        GPIO.cleanup()
+#        sys.exit(1)
     resetDigits()
 
 def tryCombination(c):
@@ -92,7 +91,36 @@ def tryCombination(c):
     else:
         print
 
+def saveState():
+    print "Saving state to checkpoint file..."
+    try:
+        f = open('pysafehack.state', 'w')
+        f.write(successCombos)
+        for c in triedCombos.keys():
+            f.write(str(c)+"\n")
+        f.close()
+    except IOError:
+        print
+        print "ERROR: Could not save checkpoint file!"
+        sys.exit(1)
+
+def loadState():
+    global successCombos
+    global triedCombos
+    print "Loading state from checkpoint file..."
+    try:
+        f = open('pysafehack.state', 'r')
+        successCombos = f.readline()
+        print "    Loaded successCombos = %s" % successCombos
+        for x in f.readlines():
+            triedCombos[x] = 1
+        print "    Loaded %d triedCombos" % len(triedCombos.keys())
+        f.close()
+    except IOError:
+        print "    No state file exists -- skipping!"
+
 gpioInit()
+loadState()
 
 while True:
     c = random.randint(0,99999)
@@ -107,6 +135,8 @@ while True:
         c %= 100000
     tryCombination(c)
     triedCombos[c] = 1
+    if len(triedCombos.keys()) % CHECKPOINT_NUM == 0:
+        saveState()
     cyclePower()
 
 GPIO.cleanup()
